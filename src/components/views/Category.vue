@@ -13,7 +13,6 @@
       style="width: 100%;margin-bottom: 20px;"
       row-key="id"
       border
-      default-expand-all
       :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
     >
       <el-table-column prop="name" label="分类名称" width="180"></el-table-column>

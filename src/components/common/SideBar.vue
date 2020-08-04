@@ -8,7 +8,6 @@
         background-color="#545c64"
         text-color="#fff"
         active-text-color="#ffd04b"
-        
       >
       <!-- :unique-opened = "true" -->
         <el-menu-item index="0">
