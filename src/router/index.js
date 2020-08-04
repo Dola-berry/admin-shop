@@ -3,7 +3,6 @@ import Router from 'vue-router'
 import Index from '@/components/views/Index'
 import Layout from '@/components/views/Layout'
 import Login from '@/components/views/Login'
-import Main from '@/components/views/Main'
 import Category from '@/components/views/Category'
 import User from '@/components/views/User'
 import Specs from '@/components/views/Specs'
@@ -12,9 +11,10 @@ import Role from '@/components/views/Role'
 import Banner from '@/components/views/Banner'
 import Seckill from '@/components/views/Seckill'
 import Goods from '@/components/views/Goods'
+import Menu from '@/components/views/Menu'
 Vue.use(Router)
 
-export default new Router({
+let route = new Router({
   mode: 'history',
   routes: [
     {
@@ -28,12 +28,12 @@ export default new Router({
       name: 'Layout',
       component: Layout,
       children: [
-        
+
         {
           //菜单页面
-          path: 'main',
-          name: 'Main',
-          component: Main,
+          path: 'menu',
+          name: 'Menu',
+          component: Menu,
         },
         {
           //分类页面
@@ -98,3 +98,24 @@ export default new Router({
     }
   ]
 })
+route.beforeEach((to, from, next) => {
+  // let username = JSON.parse(sessionStorage.getItem('list')).username
+  let username = JSON.parse(sessionStorage.getItem('list'));
+  // console.log(username);
+  if (username) {
+    //用户访问的不是login 登录页
+    if (to.path != "/login") {
+      next();
+    } else {
+      next("/");
+    }
+  } else {
+    if (to.path == "/login") {
+      next();
+    } else {
+      alert('请先登录')
+      next("/login");
+    }
+  }
+})
+export default route;

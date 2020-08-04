@@ -1,7 +1,7 @@
 <template>
     <el-container>
       <el-aside width="200px">
-        <Menu />
+        <SideBar />
       </el-aside>
       <el-container>
         <el-header style="text-align: right; font-size: 12px">
@@ -9,9 +9,7 @@
             <span>admin</span>
             <i class="el-icon-setting" style="margin-right: 15px"></i>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item>查看</el-dropdown-item>
-              <el-dropdown-item>新增</el-dropdown-item>
-              <el-dropdown-item>删除</el-dropdown-item>
+              <el-dropdown-item @click="logout">登出</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
         </el-header>
@@ -20,11 +18,18 @@
     </el-container>
 </template>
 <script>
-import Menu from "../common/Menu";
+import SideBar from "../common/SideBar";
 export default {
   components: {
-    Menu,
+    SideBar,
   },
+  methods:{
+    logout(){
+      console.log(1);
+      // sessionStorage.removeItem("list");
+      this.$router.replace('/login')
+    }
+  }
 };
 </script>
 <style>
