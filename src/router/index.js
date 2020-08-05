@@ -100,15 +100,11 @@ let route = new Router({
 })
 route.beforeEach((to, from, next) => {
   // let username = JSON.parse(sessionStorage.getItem('list')).username
-  let username = JSON.parse(sessionStorage.getItem('list'));
+  let username = JSON.parse(sessionStorage.getItem('list')) ? JSON.parse(sessionStorage.getItem('list')) :'';
   // console.log(username);
   if (username) {
     //用户访问的不是login 登录页
-    if (to.path != "/login") {
-      next();
-    } else {
-      next("/");
-    }
+    next();
   } else {
     if (to.path == "/login") {
       next();

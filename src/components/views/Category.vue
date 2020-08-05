@@ -15,8 +15,14 @@
       border
       :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
     >
-      <el-table-column prop="name" label="分类名称" width="180"></el-table-column>
-      <el-table-column prop="states" label="状态" width="80"></el-table-column>
+      <el-table-column prop="name" label="分类名称" width="180">
+       <template slot-scope="scope">{{scope.row.catename}}</template>
+      </el-table-column>
+      <el-table-column label="状态" width="120" v-model="form.status">
+        <template slot-scope="scope">
+          <el-button type="success" g v-show="scope.row.status == true">启用</el-button>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" min-width="180">
         <template>
           <el-button size="mini">编辑</el-button>
@@ -30,69 +36,29 @@
 export default {
   data() {
     return {
-      tableData: [
-        {
-          id: 1,
-          name: "家用电器",
-          states: <el-Tag type="success">启用</el-Tag>,
-          children: [
-            {
-              id: 11,
-              name: "家用电器1111",
-            },
-            {
-              id: 12,
-              name: "家用电器1111222",
-            },
-            {
-              id: 13,
-              name: "家用电器1111333",
-            },
-          ],
-        },
-        {
-          id: 2,
-          name: "手机通讯",
-          states: <el-Tag type="success">启用</el-Tag>,
-          children: [
-            {
-              id: 21,
-              name: "手机通讯11",
-            },
-            {
-              id: 22,
-              name: "手机通讯222",
-            },
-          ],
-        },
-        {
-          id: 3,
-          name: "电脑办公",
-          states: <el-Tag type="success">启用</el-Tag>,
-          children: [
-            {
-              id: 31,
-              name: "电脑办公11",
-            },
-            {
-              id: 32,
-              name: "电脑办公222",
-            },
-          ],
-        },
-        {
-          id: 4,
-          name: "家居",
-          states: <el-Tag type="success">启用</el-Tag>,
-        },
-        {
-          id: 5,
-          name: "服饰",
-          states: <el-Tag type="success">启用</el-Tag>,
-        },
-      ],
+      tableData: [],
+      form:{
+        id:'',
+        pid:'',
+        catename:"家用电器",
+        img:'',
+        status:true
+      }
     };
   },
+  mounted(){
+    // 获取商品分类列表
+    this.http.get('/api/catelist?istree=1').then(res => {
+      if(res.code == 200){
+        this.tableData = res.list || []
+      }else if(res.code == 403){
+        this.$message(res.msg)
+      }else{
+        this.$message('访问权限受限，请登录')
+      }
+    }
+    )
+  }
 };
 </script>
 <style lang="" scoped>

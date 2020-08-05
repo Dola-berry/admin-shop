@@ -29,7 +29,7 @@
     </el-table-column>
     <el-table-column prop="states" label="状态" width='80'></el-table-column>
     <el-table-column label="操作" min-width="180">
-      <template>
+      <template >
         <el-button size="mini">编辑</el-button>
         <el-button size="mini" type="danger">删除</el-button>
       </template>
@@ -47,31 +47,14 @@
 export default {
     data() {
     return {
-      tableData: [
-        {
-          id: 1,
-          user_id: "4449203820488403",
-          role:'系统管理员',
-          uname:'admin',
-          states: <el-Tag type='success'>启用</el-Tag>
-        },
-        {
-          id: 2,
-          user_id: "44ewew20488403",
-          role:'客服专员',
-          uname:'莓莓',
-          states: <el-Tag type='success'>启用</el-Tag>
-        },
-        {
-          id: 3,
-          user_id: "qef3820488fe403",
-          role:'客服专员',
-          uname:'哆啦',
-          states: <el-Tag type='success'>启用</el-Tag>
-        },
-      ],
-    };
+      tableData: [],
+    }
   },
+    mounted(){
+      this.http.get('/api/userlist').then(res => {
+        console.log(res);
+      })
+    }
 }
 </script>
 <style lang="" scoped>

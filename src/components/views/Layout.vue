@@ -5,11 +5,11 @@
       </el-aside>
       <el-container>
         <el-header style="text-align: right; font-size: 12px">
-          <el-dropdown>
+          <el-dropdown @command="logout">
             <span>admin</span>
             <i class="el-icon-setting" style="margin-right: 15px"></i>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item @click="logout">登出</el-dropdown-item>
+              <el-dropdown-item >登出</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
         </el-header>
@@ -25,9 +25,10 @@ export default {
   },
   methods:{
     logout(){
-      console.log(1);
-      // sessionStorage.removeItem("list");
-      this.$router.replace('/login')
+      // console.log(1);
+      sessionStorage.removeItem("list");
+      sessionStorage.removeItem("token");
+      this.$router.replace('login')
     }
   }
 };

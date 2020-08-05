@@ -8,7 +8,12 @@ import store from './store';
 import axios from 'axios';
 import 'element-ui/lib/theme-chalk/index.css';
 Vue.use(ElementUI);
+import {get,post} from "./utils/http"
 Vue.prototype.axios = axios;
+Vue.prototype.http = {
+  get,
+  post
+}
 Vue.config.productionTip = false;
 /* eslint-disable no-new */
 new Vue({
