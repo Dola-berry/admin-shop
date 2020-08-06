@@ -52,7 +52,6 @@
         </template>
       </el-table-column>
     </el-table>
-
     <!-- 菜单添加/修改 -->
     <el-dialog :title="'菜单'+tip" :visible.sync="dialogFormVisible">
       <el-form :model="form" ref="form">
@@ -82,7 +81,7 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">取 消</el-button>
+        <el-button  @click="handleReset('form')">取 消</el-button>
         <el-button type="primary" @click="handleSubmit('form')">确 定</el-button>
       </div>
     </el-dialog>
@@ -128,6 +127,19 @@ export default {
     };
   },
   methods: {
+    // 取消
+    handleReset(){
+      this.dialogFormVisible = false;
+            this.tip = '添加';
+            this.form= {
+				pid: '0',
+				title: '',
+				icon: '',
+				type: '1',
+				url: '',
+				status: true
+			}
+    },
     // 点击添加按钮
     handleAdd() {
       // 显示弹窗对话框
@@ -155,7 +167,7 @@ export default {
               type: "success",
             });
             //关闭弹框
-            (this.dialogFormVisible = false),
+            this.dialogFormVisible = false,
               // 重新获取菜单
               this.http.get("/api/menulist?istree=1").then((res) => {
                 this.tableData = res.list;
@@ -184,7 +196,7 @@ export default {
       this.getMenu();
       // 获取当前行的id
       let id = row.id;
-      console.log(id);
+      // console.log(id);
       // 获取当前id对应的数据
       this.http.get("/api/menuinfo", { id }).then((res) => {
         // 定义变量接受数据

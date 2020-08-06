@@ -25,24 +25,22 @@
         </template>
       </el-table-column>
     </el-table>
-    <!-- 菜单添加/修改 -->
+    <!-- 添加/修改 -->
     <el-dialog :title="'角色'+tip" :visible.sync="dialogFormVisible">
       <el-form :model="form" ref="form" :rules="rules">
         <el-form-item label="角色名称" :label-width="formLabelWidth">
           <el-input v-model="form.rolename" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="菜单权限" :label-width="formLabelWidth" class="ta">
-          <el-checkbox label="1" v-model="form.menus" class="el-icon-caret-right">系统设置</el-checkbox>
-          <el-checkbox label="2" v-model="form.menus" class="el-icon-caret-right">商城管理</el-checkbox>
           <el-tree
-          :props="props"
-          :load="loadNode"
-          lazy
-          show-checkbox
-          @check-change="handleCheckChange"
-        ></el-tree>
+            :data="data"
+            show-checkbox
+            node-key="id"
+            :default-expanded-keys="[2, 3]"
+            :default-checked-keys="[1]"
+            label='系统设置'
+          ></el-tree>
         </el-form-item>
-        
 
         <el-form-item label="状态" style="text-align:left" :label-width="formLabelWidth">
           <el-switch v-model="form.status"></el-switch>
@@ -62,6 +60,7 @@ export default {
     return {
       dialogFormVisible: false,
       tableData: [],
+      data:[],
       formLabelWidth: "200px",
       tip: "添加",
       form: {
@@ -69,6 +68,32 @@ export default {
         menus: [],
         status: true,
       },
+      //  data: [
+      //     {
+      //     id: 1,
+      //     label: '一级 2',
+      //     children: [{
+      //       id: 2,
+      //       label: '二级 2-1'
+      //     }, {
+      //       id: 3,
+      //       label: '二级 2-2'
+      //     }]
+      //   }, {
+      //     id: 4,
+      //     label: '一级 3',
+      //     children: [{
+      //       id: 5,
+      //       label: '二级 3-1'
+      //     }, {
+      //       id: 6,
+      //       label: '二级 3-2'
+      //     }]
+      //   }],
+      //   defaultProps: {
+      //     children: 'children',
+      //     label: 'label'
+      //   },
       // 定义规则
       rules: {
         rolename: [
@@ -103,6 +128,11 @@ export default {
     // 添加按钮
     handleAdd() {
       this.dialogFormVisible = true;
+
+    },
+    // 渲染弹窗内容
+    getmenu(){
+      
     },
     // 修改按钮
     handleEdit() {
@@ -112,51 +142,16 @@ export default {
     handleDelete(row) {
       let id = row.id;
       this.http.post("/api/roledelete", { id }).then((res) => {
-        console.log(res);
+        // console.log(res);
       });
     },
-   handleCheckChange(data, checked, indeterminate) {
-        console.log(data, checked, indeterminate);
-      },
-      handleNodeClick(data) {
-        console.log(data);
-      },
-      loadNode(node, resolve) {
-        if (node.level === 0) {
-          return resolve([{ name: 'region1' }, { name: 'region2' }]);
-        }
-        if (node.level > 3) return resolve([]);
-
-        var hasChild;
-        if (node.data.name === 'region1') {
-          hasChild = true;
-        } else if (node.data.name === 'region2') {
-          hasChild = false;
-        } else {
-          hasChild = Math.random() > 0.5;
-        }
-
-        setTimeout(() => {
-          var data;
-          if (hasChild) {
-            data = [{
-              name: 'zone' + this.count++
-            }, {
-              name: 'zone' + this.count++
-            }];
-          } else {
-            data = [];
-          }
-
-          resolve(data);
-        }, 500);
-      }
-    },
+  },
   mounted() {
     this.http.get("/api/rolelist").then((res) => {
       // console.log(res.list);
       if (res.code == 200) {
         this.tableData = res.list || [];
+        console.log(this.tableData);
       } else if (res.code == 403) {
         this.$message(res.msg);
       } else {
@@ -176,6 +171,6 @@ export default {
 }
 .ta {
   /* text-align-last: left; */
-  width: 200px;
+  width: 500px;
 }
 </style>

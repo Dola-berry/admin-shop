@@ -25,9 +25,7 @@ export default {
   },
   methods:{
     logout(){
-      // console.log(1);
-      sessionStorage.removeItem("list");
-      sessionStorage.removeItem("token");
+      sessionStorage.clear();
       this.$router.replace('login')
     }
   }

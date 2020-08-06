@@ -65,35 +65,6 @@ export default {
       })
     }
   },
-  //  methods: {
-  //   submitForm(formName) {
-  //     this.$refs[formName].validate(valid => {
-  //       if (valid) {
-  //           //params1 : 提交路径
-  //           // params2: 参数
-  //           this.http.post("/api/userlogin",this.ruleForm).then((res)=>{
-  //               console.log(res)
-  //               if(res.code==200){
-
-  //                 sessionStorage.setItem("list",JSON.stringify(res.list));
-  //                 sessionStorage.setItem("token",res.list.token)
-  //                 // 登录成功进行跳转
-  //                 this.$router.replace("/index")
-  //               }else{
-  //                 //  登录失败显示错误信息
-  //                 this.$message(res.msg)
-  //               }
-  //           }).catch(err=>{
-  //             console.log(err)
-  //             this.$message(err.msg)
-  //           })
-  //       } else {
-  //         console.log("error submit!!");
-  //         return false;
-  //       }
-  //     });
-  //   },
-  // }
 };
 </script>
 <style lang="" scoped>
