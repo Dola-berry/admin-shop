@@ -6,10 +6,12 @@ import router from './router';
 import ElementUI from 'element-ui'; 
 import store from './store';
 import axios from 'axios';
+import $ from 'jquery';
 import 'element-ui/lib/theme-chalk/index.css';
 Vue.use(ElementUI);
 import {get,post} from "./utils/http"
 Vue.prototype.axios = axios;
+Vue.prototype.$ = $;
 Vue.prototype.http = {
   get,
   post

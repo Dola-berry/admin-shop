@@ -17,7 +17,12 @@
           <el-button type="primary" plain v-for="(item,idx) in scope.row.attrs" :key="idx">{{item}}</el-button>
         </template>
       </el-table-column>
-      <el-table-column prop="states" label="状态" width="80"></el-table-column>
+      <el-table-column label="状态" width="120" v-model="form.status">
+        <template slot-scope="scope">
+          <el-tag v-if="scope.row.status === 1" size="small" type="success">启用</el-tag>
+          <el-tag v-else-if="scope.row.status === 2" size="small" type="info">未启用</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" min-width="180">
         <template>
           <el-button size="mini">编辑</el-button>

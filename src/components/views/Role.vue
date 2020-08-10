@@ -13,10 +13,9 @@
         <template slot-scope="scope">{{ scope.row.rolename}}</template>
       </el-table-column>
       <el-table-column label="状态" width="80">
-        <template slot-scope="scope">
-          <el-tag v-if="scope.row.status === 1" size="small" type="success">启用</el-tag>
-          <el-tag v-else-if="scope.row.status === 2" size="small">未启用</el-tag>
-        </template>
+        <!-- <template slot-scope="scope"> -->
+        <el-tag size="small" type="success">启用</el-tag>
+        <!-- </template> -->
       </el-table-column>
       <el-table-column label="操作" min-width="180">
         <template slot-scope="scope">
@@ -26,7 +25,7 @@
       </el-table-column>
     </el-table>
     <!-- 添加/修改 -->
-    <el-dialog :title="'角色'+tip" :visible.sync="dialogFormVisible">
+    <el-dialog :title="'角色'+tip" :visible.sync="dialogFormVisible" :before-close="handleClose">
       <el-form :model="form" ref="form" :rules="rules">
         <el-form-item label="角色名称" :label-width="formLabelWidth">
           <el-input v-model="form.rolename" autocomplete="off"></el-input>
@@ -36,9 +35,9 @@
             :data="data"
             show-checkbox
             node-key="id"
-            :default-expanded-keys="[2, 3]"
-            :default-checked-keys="[1]"
-            label='系统设置'
+            :default-expanded-keys="[form.menus]"
+            :props="defaultProps"
+            ref="tree"
           ></el-tree>
         </el-form-item>
 
@@ -47,7 +46,7 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">取 消</el-button>
+        <el-button @click="handleReset()">取 消</el-button>
         <el-button type="primary" @click="handleSubmit('form')">确 定</el-button>
       </div>
     </el-dialog>
@@ -60,7 +59,7 @@ export default {
     return {
       dialogFormVisible: false,
       tableData: [],
-      data:[],
+      data: [],
       formLabelWidth: "200px",
       tip: "添加",
       form: {
@@ -68,32 +67,10 @@ export default {
         menus: [],
         status: true,
       },
-      //  data: [
-      //     {
-      //     id: 1,
-      //     label: '一级 2',
-      //     children: [{
-      //       id: 2,
-      //       label: '二级 2-1'
-      //     }, {
-      //       id: 3,
-      //       label: '二级 2-2'
-      //     }]
-      //   }, {
-      //     id: 4,
-      //     label: '一级 3',
-      //     children: [{
-      //       id: 5,
-      //       label: '二级 3-1'
-      //     }, {
-      //       id: 6,
-      //       label: '二级 3-2'
-      //     }]
-      //   }],
-      //   defaultProps: {
-      //     children: 'children',
-      //     label: 'label'
-      //   },
+      defaultProps: {
+        children: "children",
+        label: "title",
+      },
       // 定义规则
       rules: {
         rolename: [
@@ -109,6 +86,11 @@ export default {
     };
   },
   methods: {
+    // 添加按钮
+    handleAdd() {
+      this.dialogFormVisible = true;
+      this.data = JSON.parse(sessionStorage.getItem("list")).menus;
+    },
     // 确认添加
     handleSubmit(formName) {
       this.$refs[formName].validate((vaild) => {
@@ -116,48 +98,82 @@ export default {
           return false;
         }
         // 判断状态是否启用
-        this.form.status = this.form.status ? "1" : "2";
+        this.form.status = this.form.status ? 1 : 2;
         // 判断是编辑还是添加
         let url = this.form.id ? "/api/roleedit" : "/api/roleadd";
-        dialogFormVisible: false,
-          this.http.post(url, this.from).then((res) => {
-            console.log(res);
-          });
+        this.dialogFormVisible = false;
+        // 保存树状选中框
+        this.form.menus = this.$refs.tree
+          .getCheckedKeys()
+          .concat(this.$refs.tree.getHalfCheckedKeys());
+        // 将数据提交到后台
+        this.http.post(url, this.form).then((res) => {
+          if (res.code == 200) {
+            this.$message(res.msg);
+          } else {
+            this.$message(res.msg);
+          }
+          // 重新获取数据渲染
+          this.roleList();
+        });
       });
     },
-    // 添加按钮
-    handleAdd() {
-      this.dialogFormVisible = true;
-
+    roleList() {
+      // 获取用户列表
+      this.http.get("/api/rolelist").then((res) => {
+        if (res.code == 200) {
+          this.tableData = res.list || [];
+        } else if (res.code == 403) {
+          this.$message(res.msg);
+        } else {
+          this.$message("访问权限受限,请登录");
+        }
+      });
     },
-    // 渲染弹窗内容
-    getmenu(){
-      
+    // 弹窗关闭
+    handleClose(done) {
+      this.$confirm("确认关闭？")
+        .then((_) => {
+          done();
+        })
+        .catch((_) => {});
     },
     // 修改按钮
-    handleEdit() {
+    handleEdit(row) {
       this.dialogFormVisible = true;
+      this.tip = "修改";
+      this.data = JSON.parse(sessionStorage.getItem("list")).menus;
+      this.http.get("/api/roleinfo", row).then((res) => {
+        let info = res.list;
+        info.status = info.status == 1 ? true : false;
+        // 保存树状选中框
+        // info.menus = info.menus.splite()
+        this.form = info;
+        console.log(info.menus);
+        this.roleList();
+      });
     },
     // 删除按钮
     handleDelete(row) {
       let id = row.id;
       this.http.post("/api/roledelete", { id }).then((res) => {
-        // console.log(res);
+        if(res.code == 200) this.roleList();
+        this.$message(res.msg)
       });
+    },
+    // 取消
+    handleReset() {
+      this.dialogFormVisible = false;
+      this.tip = "添加";
+      this.form = {
+        rolename: "",
+        menus: [],
+        status: true,
+      };
     },
   },
   mounted() {
-    this.http.get("/api/rolelist").then((res) => {
-      // console.log(res.list);
-      if (res.code == 200) {
-        this.tableData = res.list || [];
-        console.log(this.tableData);
-      } else if (res.code == 403) {
-        this.$message(res.msg);
-      } else {
-        this.$message("访问权限受限,请登录");
-      }
-    });
+    this.roleList();
   },
 };
 </script>
@@ -171,6 +187,6 @@ export default {
 }
 .ta {
   /* text-align-last: left; */
-  width: 500px;
+  width: 800px;
 }
 </style>

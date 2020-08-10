@@ -53,15 +53,15 @@
       </el-table-column>
     </el-table>
     <!-- 菜单添加/修改 -->
-    <el-dialog :title="'菜单'+tip" :visible.sync="dialogFormVisible">
-      <el-form :model="form" ref="form">
+    <el-dialog :title="'菜单'+tip" :visible.sync="dialogFormVisible" :before-close="handleClose">
+      <el-form :model="form" ref="form" :rules="rules">
         <el-form-item label="菜单名称" :label-width="formLabelWidth" style="text-align:left" prop="pid">
           <el-select v-model="form.pid" placeholder="请选择上级菜单" @change="menuchange($event)">
             <el-option value="0" label="顶级菜单"></el-option>
             <el-option v-for="item in menus" :key="item.id" :label="item.title" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="菜单名称" :label-width="formLabelWidth">
+        <el-form-item label="菜单名称" :label-width="formLabelWidth" prop="title">
           <el-input v-model="form.title" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="菜单图标" :label-width="formLabelWidth" v-show="form.pid === '0'">
@@ -81,7 +81,7 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button  @click="handleReset('form')">取 消</el-button>
+        <el-button @click="handleReset('form')">取 消</el-button>
         <el-button type="primary" @click="handleSubmit('form')">确 定</el-button>
       </div>
     </el-dialog>
@@ -104,6 +104,7 @@ export default {
         url: "",
         status: true,
       },
+      // 表单域标签的宽度
       formLabelWidth: "120px",
       // 弹窗是否打开
       dialogFormVisible: false,
@@ -126,19 +127,23 @@ export default {
       },
     };
   },
+  mounted() {
+    this.menulist()
+  },
   methods: {
-    // 取消
-    handleReset(){
-      this.dialogFormVisible = false;
-            this.tip = '添加';
-            this.form= {
-				pid: '0',
-				title: '',
-				icon: '',
-				type: '1',
-				url: '',
-				status: true
-			}
+    menulist() {
+      // 获取菜单列表
+      this.http.get("/api/menulist?istree=1").then((res) => {
+        // 获取成功时
+        if (res.code == 200) {
+          this.tableData = res.list || [];
+        } else if (res.code == 403) {
+          this.$message(res.msg);
+        } else {
+          // 访问时间限制
+          this.$message("访问权限受限,请登录");
+        }
+      });
     },
     // 点击添加按钮
     handleAdd() {
@@ -146,6 +151,17 @@ export default {
       this.dialogFormVisible = true;
       //调用getMenu
       this.getMenu();
+    },
+    // 获取菜单
+    getMenu() {
+      // pid = 0 获取菜单   不包含目录
+      this.http.get("/api/menulist?pid=0").then((res) => {
+        this.menus = res.list;
+      });
+    },
+    // 判断当前的类型
+    menuchange(e) {
+      this.form.type = e != "0" ? "2" : "1";
     },
     // 添加确认函数
     handleSubmit(formName) {
@@ -167,11 +183,9 @@ export default {
               type: "success",
             });
             //关闭弹框
-            this.dialogFormVisible = false,
+            (this.dialogFormVisible = false),
               // 重新获取菜单
-              this.http.get("/api/menulist?istree=1").then((res) => {
-                this.tableData = res.list;
-              });
+             this.menulist()
           } else {
             // 添加失败提示信息
             this.$message({
@@ -183,15 +197,33 @@ export default {
         });
       });
     },
-      // 判断当前的类型
-    menuchange(e) {
-      this.form.type = e != "0" ? "2" : "1";
+    // 取消按钮（重置form）
+    handleReset() {
+      this.dialogFormVisible = false;
+      this.tip = "添加";
+      this.form = {
+        pid: "0",
+        title: "",
+        icon: "",
+        type: "1",
+        url: "",
+        status: true,
+      };
     },
+    // 弹窗关闭
+    handleClose(done) {
+      this.$confirm("确认关闭？")
+        .then((_) => {
+          done();
+        })
+        .catch((_) => {});
+    },
+    
     // 编辑：
     handleEdit(row) {
       // 显示弹窗对话框
       this.dialogFormVisible = true;
-      this.tip = '修改';
+      this.tip = "修改";
       //调用getMenu
       this.getMenu();
       // 获取当前行的id
@@ -213,13 +245,6 @@ export default {
         this.form = info;
       });
     },
-    // 获取菜单
-    getMenu() {
-      // pid = 0 获取菜单   不包含目录
-      this.http.get("/api/menulist?pid=0").then((res) => {
-        this.menus = res.list;
-      });
-    },
     // 删除函数
     handleDelete(row) {
       // console.log(row.id);
@@ -238,20 +263,6 @@ export default {
         }
       });
     },
-  },
-  mounted() {
-    // 获取菜单列表
-    this.http.get("/api/menulist?istree=1").then((res) => {
-      // 获取成功时
-      if (res.code == 200) {
-        this.tableData = res.list || [];
-      } else if (res.code == 403) {
-        this.$message(res.msg);
-      } else {
-        // 访问时间限制
-        this.$message("访问权限受限,请登录");
-      }
-    });
   },
 };
 </script>

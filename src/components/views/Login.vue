@@ -26,9 +26,10 @@ export default {
   data() {
     return {
       ruleForm: {
-        username: "",
-        password: "",
+        username: "admin",
+        password: "123123",
       },
+      // 定义验证规则
       rules: {
         username: [
           { required: true, message: "请输入用户名", trigger: "blur" },
@@ -47,8 +48,8 @@ export default {
       this.$refs[formName].validate((valid) => {
         if(valid){
           this.axios.post('/api/userlogin',this.ruleForm).then(res => {
-            // console.log(res);
             if(res.data.code == 200){
+            // 将数据保存到token
             sessionStorage.setItem("list",JSON.stringify(res.data.list))
             sessionStorage.setItem("token",res.data.list.token)
             // 登录成功进行跳转

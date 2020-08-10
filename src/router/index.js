@@ -99,13 +99,29 @@ let route = new Router({
   ]
 })
 route.beforeEach((to, from, next) => {
-  // let username = JSON.parse(sessionStorage.getItem('list')).username
   let list = JSON.parse(sessionStorage.getItem('list')) ? JSON.parse(sessionStorage.getItem('list')) :'';
   // console.log(username);
   if (list) {
     //用户访问的不是login 登录页
-    next();
+    if(to.path == "/login"){
+      next("/")
+    }else{
+      // 首页 都可去
+      if(to.path == "/index" || "/"){
+        next()
+      }else{
+        // 当前身份是否可去当前路由
+        let flag = list.menus_url.find(item => item == to.path);
+        if(flag){
+          next()
+        }else{
+          console.log("当前权限受限");
+          next(false)
+        }
+      }
+    }
   } else {
+    // 没有登陆
     if (to.path == "/login") {
       next();
     } else {
@@ -113,10 +129,5 @@ route.beforeEach((to, from, next) => {
       next("/login");
     }
   }
-  // if(list){
-  //   if (to.path == "/login") {
-  //         next("/");
-  //       }
-  // }
 })
 export default route;

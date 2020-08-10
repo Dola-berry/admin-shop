@@ -31,9 +31,7 @@
         <el-form-item label="活动名称" :label-width="formLabelWidth">
           <el-input v-model="form.title" autocomplete="off"></el-input>
         </el-form-item>
-        <template>
-          <div class="block" style="text-align:left">
-            <span class="demonstration">活动日期</span>
+        <el-form-item label="活动日期" :label-width="formLabelWidth">
             <el-date-picker
               v-model="value2"
               type="daterange"
@@ -44,8 +42,7 @@
               end-placeholder="结束日期"
               :picker-options="pickerOptions"
             ></el-date-picker>
-          </div>
-        </template>
+          </el-form-item>
         <el-form-item label="状态" style="text-align:left" :label-width="formLabelWidth">
           <el-switch v-model="form.status"></el-switch>
         </el-form-item>
