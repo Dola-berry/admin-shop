@@ -13,9 +13,10 @@
         <template slot-scope="scope">{{ scope.row.rolename}}</template>
       </el-table-column>
       <el-table-column label="状态" width="80">
-        <!-- <template slot-scope="scope"> -->
-        <el-tag size="small" type="success">启用</el-tag>
-        <!-- </template> -->
+        <template slot-scope="scope">
+          <el-tag v-if="scope.row.status === 1" size="small" type="success">启用</el-tag>
+          <el-tag v-else-if="scope.row.status === 2" size="small" type="info">未启用</el-tag>
+        </template>
       </el-table-column>
       <el-table-column label="操作" min-width="180">
         <template slot-scope="scope">
@@ -27,10 +28,10 @@
     <!-- 添加/修改 -->
     <el-dialog :title="'角色'+tip" :visible.sync="dialogFormVisible" :before-close="handleClose">
       <el-form :model="form" ref="form" :rules="rules">
-        <el-form-item label="角色名称" :label-width="formLabelWidth">
+        <el-form-item label="角色名称" :label-width="formLabelWidth" prop='rolename'>
           <el-input v-model="form.rolename" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="菜单权限" :label-width="formLabelWidth" class="ta">
+        <el-form-item label="菜单权限" :label-width="formLabelWidth">
           <el-tree
             :data="data"
             show-checkbox
@@ -113,6 +114,7 @@ export default {
           } else {
             this.$message(res.msg);
           }
+          this.handleReset();
           // 重新获取数据渲染
           this.roleList();
         });
@@ -143,13 +145,15 @@ export default {
       this.dialogFormVisible = true;
       this.tip = "修改";
       this.data = JSON.parse(sessionStorage.getItem("list")).menus;
-      this.http.get("/api/roleinfo", row).then((res) => {
+      let id = row.id;
+      this.http.get("/api/roleinfo", {id}).then((res) => {
         let info = res.list;
+        info.id = id;
         info.status = info.status == 1 ? true : false;
         // 保存树状选中框
         // info.menus = info.menus.splite()
         this.form = info;
-        console.log(info.menus);
+        // console.log(info.menus);
         this.roleList();
       });
     },
@@ -184,9 +188,5 @@ export default {
 }
 .btn button {
   float: left;
-}
-.ta {
-  /* text-align-last: left; */
-  width: 800px;
 }
 </style>

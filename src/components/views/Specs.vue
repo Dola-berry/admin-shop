@@ -24,16 +24,16 @@
         </template>
       </el-table-column>
       <el-table-column label="操作" min-width="180">
-        <template>
-          <el-button size="mini">编辑</el-button>
-          <el-button size="mini" type="danger">删除</el-button>
+        <template slot-scope="scope">
+          <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
+          <el-button size="mini" type="danger" @click="handleDelect(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
     <!-- 添加/修改 -->
     <el-dialog :title="'角色'+tip" :visible.sync="dialogFormVisible">
       <el-form :model="form" ref="form" :rules="rules">
-        <el-form-item label="属性名称" :label-width="formLabelWidth">
+        <el-form-item label="属性名称" :label-width="formLabelWidth" prop='specsname'>
           <el-input v-model="form.specsname" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="属性值" :label-width="formLabelWidth" style="text-align:left">
@@ -45,7 +45,7 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">取 消</el-button>
+        <el-button @click="handleReset()">取 消</el-button>
         <el-button type="primary" @click="handleSubmit('form')">确 定</el-button>
       </div>
     </el-dialog>
@@ -59,7 +59,9 @@ export default {
       tableData: [],
       tip:'添加',
       dialogFormVisible:false,
-      rules:{},
+      rules:{
+        specsname:{required:true,message:'请输入名称',trigger:'blur'}
+      },
       form:{
         specsname:'',
         attrs:'',
@@ -69,7 +71,11 @@ export default {
     };
   },
   mounted() {
-    // 获取商品规格
+   this.getspecs();
+  },
+  methods:{
+    getspecs(){
+       // 获取商品规格
     this.http.get("/api/specslist?size=10&page=1").then((res) => {
       if (res.code == 200) {
         // console.log(res);
@@ -80,12 +86,76 @@ export default {
         this.$message("访问权限受限，请登录");
       }
     });
-  },
-  methods:{
-    handleSubmit(formName){},
+    },
+    //添加按钮
     handleAdd(){
       this.dialogFormVisible = true
-    }
+    },
+    // 确认添加
+    handleSubmit(formName){
+        this.$refs[formName].validate(valid => {
+          if(!valid) return;
+          // 判断是编辑还是添加
+          let url = this.form.id ? '/api/specsedit':'/api/specsadd';
+          // 判断状态是否启用
+          this.form.status = this.form.status ? 1 : 2;
+          this.http.post(url,this.form).then(res => {
+            if(res.code == 200) {
+              this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "success",
+            });
+              this.dialogFormVisible = false;
+              this.getspecs();
+              this.handleReset()
+            }else{
+              this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "error",
+            });
+            }
+          })
+        })
+    },
+    // 取消
+    handleReset() {
+      this.dialogFormVisible = false;
+      this.tip = "添加";
+      this.form = {
+        roleid: "",
+        username: "",
+        password: "",
+        status: true,
+      };
+    },
+    // 修改按钮
+    handleEdit(row){
+      let id = row.id;
+      this.dialogFormVisible = true;
+      this.http.get('/api/specsinfo',{id}).then(res => {
+        //  console.log(res.list);
+        if(res.code == 200){
+         let info = res.list[0];
+         info.id = id;
+         info.attrs = info.attrs.join(',')
+         info.status = info.status == 1 ? true : false;
+         this.form = info;
+        }
+      })
+    },
+    // 删除按钮
+    handleDelect(row){
+      let id = row.id;
+      this.http.post('/api/specsdelete',{id}).then(res => {
+        if(res.code == 200) {
+          // this.tableData = res.list || [];
+          // console.log(this.tableData = res.list);
+          this.getspecs()
+        }
+      })
+    },
   }
 };
 </script>

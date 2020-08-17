@@ -21,7 +21,7 @@
       <el-table-column label="状态" width="80">
         <template slot-scope="scope">
           <el-tag v-if="scope.row.status === 1" size="small" type="success">启用</el-tag>
-          <el-tag v-else-if="scope.row.status === 2" size="small">未启用</el-tag>
+          <el-tag v-else-if="scope.row.status === 2" size="small" type="info">未启用</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="操作" min-width="180">
@@ -47,18 +47,12 @@
           label="角色"
           :label-width="formLabelWidth"
           style="text-align:left"
-          v-model="form.roleid"
         >
           <el-select placeholder="请选择角色" v-model="form.roleid">
-            <el-option
-              v-for="item in roles"
-              :key="item.id"
-              :label="item.rolename"
-              :value="item.id"
-            ></el-option>
+            <el-option v-for="item in roles" :key="item.id" :label="item.rolename" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="用户名" :label-width="formLabelWidth">
+        <el-form-item label="用户名" :label-width="formLabelWidth" prop='username'>
           <el-input v-model="form.username" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="密码" :label-width="formLabelWidth">
@@ -111,11 +105,11 @@ export default {
       // 总数
       total: 0,
       //角色
-      roles:[],
+      roles: [],
     };
   },
   mounted() {
-    this.getMenu()
+    this.getMenu();
     this.getPage();
   },
   methods: {
@@ -145,21 +139,21 @@ export default {
     },
     // 页码改变触发
     handleCurrentChange(page) {
-       this.forminfo.page = page;
-       this.getMenu();
+      this.forminfo.page = page;
+      this.getMenu();
     },
     // 添加按钮
     handleAdd() {
       this.dialogFormVisible = true;
       this.getMenu();
-      this.role()
+      this.role();
     },
     // 获取角色
-     role() {
+    role() {
       this.http.get("/api/rolelist").then((res) => {
-        this.roles = res.list
-      })
-     },
+        this.roles = res.list;
+      });
+    },
     // 确认添加按钮
     handleSubmit(formName) {
       this.$refs[formName].validate((valid) => {
@@ -172,15 +166,24 @@ export default {
         let url = this.form.id ? "/api/useredit" : "/api/useradd";
         // 提交到后台
         this.http.post(url, this.form).then((res) => {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: "success",
-          });
-          //关闭弹框
-          (this.dialogFormVisible = false),
-            // 重新获取菜单
-           this.getMenu();
+          if (res.code == 200) {
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "success",
+            });
+            //关闭弹框
+            (this.dialogFormVisible = false),
+              // 重新获取菜单
+              this.getMenu();
+              this.handleReset()
+          }else{
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "error",
+            });
+          }
         });
       });
     },
@@ -207,7 +210,8 @@ export default {
     handleDelete(row) {
       this.http.post("/api/userdelete", { id: row.id }).then((res) => {
         if (res.code == 200) {
-          this.tableData = res.list;
+          // this.tableData = res.list;
+          this.getMenu()
         } else {
           this.$message({
             showClose: true,
@@ -230,6 +234,7 @@ export default {
         if (res.code == 200) {
           // console.log(res);
           let info = res.list;
+          info.id = row.id;
           info.status = info.status == 1 ? true : false;
           this.form = info;
         } else {
@@ -241,7 +246,6 @@ export default {
         }
       });
     },
-    
   },
 };
 </script>

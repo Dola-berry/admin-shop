@@ -157,7 +157,7 @@ export default {
     },
     // 判断是一级还是二级菜单
     menuchange(e) {
-      this.form.pid = e == 0 ? 0 : 1;
+      this.form.pid = e == 0 ? 0 : this.form.pid;
     },
     // 清除图片列表
     handleRemove() {
@@ -200,6 +200,7 @@ export default {
             Authorization: sessionStorage.getItem("token"),
           },
         }).then((res) => {
+          // console.log(res);
           (this.dialogFormVisible = false), this.handleReset();
           // 重新渲染
           this.getcate();
@@ -211,9 +212,9 @@ export default {
       this.dialogFormVisible = false;
       this.tip = "添加";
       this.form = {
-        roleid: "",
-        username: "",
-        password: "",
+        pid: "",
+        catename: "",
+        img: "",
         status: true,
       };
       this.handleRemove();
@@ -259,7 +260,7 @@ export default {
           this.$message({
             showClose: true,
             message: res.msg,
-            type: "error",
+            type: "success",
           });
         }
         }

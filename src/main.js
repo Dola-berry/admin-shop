@@ -12,6 +12,7 @@ Vue.use(ElementUI);
 import {get,post} from "./utils/http"
 Vue.prototype.axios = axios;
 Vue.prototype.$ = $;
+// console.log(Vue.prototype);
 Vue.prototype.http = {
   get,
   post

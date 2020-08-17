@@ -184,6 +184,7 @@ export default {
             });
             //关闭弹框
             (this.dialogFormVisible = false),
+            this.handleReset()
               // 重新获取菜单
              this.menulist()
           } else {

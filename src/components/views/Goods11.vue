@@ -44,19 +44,16 @@
       :total="pagecount"
       @current-change="handleCurrentChange"
     ></el-pagination>
-    <!-- 商品添加/修改
-            opened：弹窗出现的动画效果结束后 执行事件
-
-        
-    -->
+    <!-- 添加/修改 -->
+    <!-- 弹框 -->
     <el-dialog
       :title="'商品'+tip"
-      :visible.sync="infoVisible"
-      @close="handleReset"
+      :visible.sync="dialogFormVisible"
+      :before-close="handleClose"
       @opened="handleOpen"
       style="text-align:left"
     >
-      <el-form :model="form" :rules="rules" ref="form" label-width="100px" class="demo-form">
+      <el-form :model="form" ref="form" label-width="100px" class="demo-form">
         <el-form-item label="一级分类" prop="first_cateid">
           <el-select
             v-model="form.first_cateid"
@@ -84,15 +81,7 @@
         <el-form-item label="商品名称" prop="goodsname">
           <el-input v-model="form.goodsname" placeholder="请输入商品名称"></el-input>
         </el-form-item>
-
-        <!-- 
-                    action：自动上传的地址  # 不自动上传
-                    list-type：列表类型 照片墙
-                    onchange: 选中上传图片触发回调函数 ，参数对象的 raw 属性包含上传图片的信息
-                    multiple: 是否上传复数文件
-                    auto-upload：是否自动上传
-
-        -->
+        <!-- 分类图片 -->
         <el-form-item label="商品图片">
           <el-upload
             action="#"
@@ -102,7 +91,7 @@
             :multiple="false"
             :auto-upload="false"
             ref="prodimg"
-            
+            class="uploadBox"
           >
             <i slot="default" class="el-icon-plus"></i>
             <div slot="file" slot-scope="{file}">
@@ -125,19 +114,13 @@
               </span>
             </div>
           </el-upload>
-
           <!-- 显示上传图片的缩略图 -->
           <el-dialog :visible.sync="dialogVisible">
             <img width="100%" :src="dialogImageUrl" alt />
           </el-dialog>
         </el-form-item>
         <el-form-item label="商品规格名">
-          <el-select
-            v-model="form.specsid"
-            @change="handleSpecsChange"
-            filterable
-            placeholder="请选择商品规格名"
-          >
+          <el-select v-model="form.specsid" placeholder="请选择商品规格名" @change="handleSpecsChange">
             <el-option
               v-for="item in specsarr"
               :key="item.id"
@@ -147,14 +130,14 @@
           </el-select>
         </el-form-item>
         <el-form-item label="商品规格值">
-          <el-select v-model="form.specsattr" :multiple="true" placeholder="请选择商品规格值">
+          <el-select v-model="form.specsattr" placeholder="请选择商品规格值">
             <el-option v-for="item in specsattrs" :key="item" :label="item" :value="item"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="销售价">
           <el-input v-model="form.price" type="number" :disabled="!form.status"></el-input>
         </el-form-item>
-        <el-form-item label="市场价">
+        <el-form-item label="市场价" prop="market_price">
           <el-input v-model="form.market_price" type="number" :disabled="!form.status"></el-input>
         </el-form-item>
         <el-form-item label="是否新品">
@@ -169,9 +152,9 @@
             <el-radio v-model="form.ishot" :label="false">否</el-radio>
           </template>
         </el-form-item>
-        <el-form-item label="商品描述">
-          <!-- 添加容器 -->
-          <div id="editor" ref="editorElem" style="text-align:left"></div>
+        <!-- 富文本框编辑 -->
+        <el-form-item label="商品描述" prop="description">
+          <div id="editor" ref="editorElem"></div>
         </el-form-item>
         <el-form-item label="状态">
           <template>
@@ -181,7 +164,7 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="handleReset('form')">取 消</el-button>
+        <el-button @click="handleReset()">取 消</el-button>
         <el-button type="primary" @click="handleSubmit('form')">确 定</el-button>
       </div>
     </el-dialog>
@@ -193,37 +176,31 @@ import E from "wangeditor";
 export default {
   data() {
     return {
+      tip: "添加",
+      dialogFormVisible: false,
+      rules: {},
+      form: {},
+      // 商品数据
+      tableData: [],
+      fileList: [],
       // 是否有原图
       oldImg: true,
       // 图片地址
       url: "http://localhost:3000",
-      // 商品数据
-      tableData: [],
-      // 每页显示数量
-      pagesize: 2,
-      // 当前页数
-      page: 1,
-      // 总页数
-      pagecount: 0,
-      totle: 20,
-      // 对话框显示
-      infoVisible: false,
-      formLabelWidth: "120px",
-      // 对话框标题文本
-      tip: "添加",
-      // 富文本编辑器
-      editor: null,
-      // 表单的数据
+      disabled: false,
+      radio: true,
+      radioh: true,
+      radios: true,
       form: {
         first_cateid: "",
         second_cateid: "",
         goodsname: "",
-        img: "",
         price: "",
         market_price: "",
+        img: "",
         description: "",
-        specsid: "",
-        specsattr: "",
+        sepcsid: "",
+        sepcsattr: "",
         isnew: false,
         ishot: false,
         status: true,
@@ -246,32 +223,152 @@ export default {
           },
         ],
       },
-      // 上传图片地址信息
       dialogImageUrl: "",
       dialogVisible: false,
-      disabled: false,
-      fileList: [],
     };
   },
-  // 挂载后开始渲染
   mounted() {
-    this.getCount();
-    this.getPage();
+    this.http.get("/api/goodslist", { size: 10, page: 1 }).then((res) => {
+      if (res.code == 200) {
+        this.tableData = res.list || [];
+      } else if (res.code == 403) {
+        this.$message(res.msg);
+      } else {
+        this.$message("访问权限受限，请登录");
+      }
+    });
   },
   methods: {
-    //获取总数
-    getCount() {
-      this.http.get("/api/goodscount").then((res) => {
-        
+    handleAdd() {
+      this.getCategory();
+      this.getSpecs();
+      this.$(".el-upload-list--picture-card").html("");
+      this.dialogFormVisible = true;
+    },
+    // 编辑操作
+    handleEdit(row) {
+      this.dialogFormVisible = true;
+      let id = row.id;
+      this.tip = "修改";
+      this.http.get("/api/goodsinfo", { id }).then((res) => {
+        let info = res.list;
+        this.getCategory();
+        if (info.first_cateid) {
+          this.getCategory(info.first_cateid);
+        }
+        info.id = id;
+        info.isnew = info.isnew == 1 ? true : false;
+        info.ishot = info.ishot == 1 ? true : false;
+        info.status = info.status == 1 ? true : false;
+        this.form = info;
+        this.getSpecs();
+        this.form.specsattr = info.specsattr.split(",");
+        if (info.img) {
+          this.fileList = [{ name: "", url: this.imgdomain + info.img }];
+        }
       });
     },
-    // 获取页数
-    getPage() {
-      this.http.get("/api/goodslist").then((res) => {
-        
-        this.tableData = res.list || [];
-        this.getCount();
+    // 选中上传图片后触发行数
+    // file:包含被上传图片信息对象
+    handleChangeFile(file) {
+      // console.log(file);
+      this.form.img = file.raw;
+    },
+    handleClose() {},
+    // 照片预览图片显示
+    handlePictureCardPreview(file) {
+      this.dialogImageUrl = file.url;
+      this.dialogVisible = true;
+    },
+    // 清除图片列表
+    handleRemove() {
+      this.$(".el-upload-list--picture-card").html("");
+    },
+    handleReset() {
+      this.dialogFormVisible = false;
+      this.form = {
+        first_cateid: "",
+        second_cateid: "",
+        goodsname: "",
+        price: "",
+        market_price: "",
+        img: "",
+        description: "",
+        sepcsid: "",
+        sepcsattr: "",
+        isnew: false,
+        ishot: false,
+        status: true,
+      };
+    },
+    handleSubmit(formName) {
+      this.$refs[formName].validate((valid) => {
+        if (!valid) {
+          return;
+        }
+        this.form.isnew = this.form.isnew ? 1 : 2;
+        this.form.ishot = this.form.ishot ? 1 : 2;
+        this.form.status = this.form.status ? 1 : 2;
+        this.form.specsattr = this.form.specsattr
+          ? this.form.specsattr.join(",")
+          : "";
+        let url = this.form.id ? "/api/goodsedit" : "/api/goodsadd";
+
+        // 1 实例化表单对象，被上上传的数据的容器
+        var data = new FormData();
+        for (let i in this.form) {
+          // 但被遍历的属性 是 img ,说明 需要添加上传文件的形象
+          data.append(i, this.form[i]);
+        }
+        // 3.提交数据
+        axios({
+          method: "post",
+          url,
+          data,
+          // 改写请求头
+          headers: {
+            // 上传类型包含文件
+            "Content-Type": "multipart/form-data",
+            // 身份验证
+            Authorization: sessionStorage.getItem("token"),
+          },
+        }).then((res) => {
+          res = res.data;
+          if (res.code == 200) {
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "success",
+            });
+            this.dialogFormVisible = false;
+            this.getPage();
+          } else {
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "error",
+            });
+          }
+        });
       });
+    },
+    // // 对话框打开事件
+    handleOpen() {
+      this.form.id ? (this.oldImg = true) : (this.oldImg = false);
+      this.$("#editor").empty();
+      // 实例化
+      this.editor = new E("#editor");
+
+      // 用户在文本框中输入 编辑 触发事件
+      // html-》 用户输入的html 结构
+      this.editor.customConfig.onchange = (html) => {
+        this.form.description = html;
+      };
+      // 创建
+      this.editor.create();
+
+      //显示商品描述
+      this.editor.txt.html(this.form.description);
     },
     //设置分类
     getCategory(pid = 0) {
@@ -299,161 +396,6 @@ export default {
       this.secondarr = [];
       this.getCategory(e);
     },
-    // 添加操作
-    handleAdd() {
-      this.getCategory();
-      this.getSpecs();
-      this.$(".el-upload-list--picture-card").html("");
-      this.infoVisible = true;
-    },
-    // 编辑操作
-    handleEdit(row) {
-      this.infoVisible = true;
-      let id = row.id;
-      this.tip = "修改";
-      this.http.get("/api/goodsinfo", { id }).then((res) => {
-        let info = res.list;
-        this.getCategory();
-        if (info.first_cateid) {
-          this.getCategory(info.first_cateid);
-        }
-        info.id = id;
-        info.isnew = info.isnew == 1 ? true : false;
-        info.ishot = info.ishot == 1 ? true : false;
-        info.status = info.status == 1 ? true : false;
-        this.form = info;
-        this.getSpecs();
-        this.form.specsattr = info.specsattr.split(",");
-        if (info.img) {
-          this.fileList = [{ name: "", url: this.imgdomain + info.img }];
-        }
-      });
-    },
-    handleSubmit(formName) {
-      this.$refs[formName].validate((valid) => {
-        if (!valid) {
-          return;
-        }
-        this.form.isnew = this.form.isnew ? 1 : 2;
-        this.form.ishot = this.form.ishot ? 1 : 2;
-        this.form.status = this.form.status ? 1 : 2;
-        this.form.specsattr = this.form.specsattr
-          ? this.form.specsattr.join(",")
-          : "";
-        let url = this.form.id ? "/api/goodsedit" : "/api/goodsadd";
-
-        // 1 实例化表单对象，被上上传的数据的容器
-        var data = new FormData();
-        for (let i in this.form) {
-          // 但被遍历的属性 是 img ,说明 需要添加上传文件的形象
-          data.append(i, this.form[i]);
-        }
-        // 3.提交数据
-        this.axios({
-          method: "post",
-          url,
-          data,
-          // 改写请求头
-          headers: {
-            // 上传类型包含文件
-            "Content-Type": "multipart/form-data",
-            // 身份验证
-            Authorization: sessionStorage.getItem("token"),
-          },
-        }).then((res) => {
-          res = res.data;
-          if (res.code == 200) {
-            this.$message({
-              showClose: true,
-              message: res.msg,
-              type: "success",
-            });
-            this.infoVisible = false;
-            this.getPage();
-          } else {
-            this.$message({
-              showClose: true,
-              message: res.msg,
-              type: "error",
-            });
-          }
-        });
-      });
-    },
-    // 重置
-    handleReset() {
-      this.infoVisible = false;
-      this.tip = "添加";
-      this.form = {
-        first_cateid: "",
-        second_cateid: "",
-        goodsname: "",
-        img: "",
-        price: "",
-        market_price: "",
-        description: "",
-        specsid: "",
-        specsattr: "",
-        isnew: false,
-        ishot: false,
-        status: true,
-      };
-      // 清空预览图片列表
-      this.$(".el-upload-list--picture-card").html("");
-    },
-    // 对话框打开事件
-    handleOpen() {
-      this.form.id ? (this.oldImg = true) : (this.oldImg = false);
-       this.$("#editor").empty();
-      // 实例化
-      this.editor = new E("#editor");
-
-      // 用户在文本框中输入 编辑 触发事件
-      // html-》 用户输入的html 结构
-      this.editor.customConfig.onchange = (html) => {
-        this.form.description = html;
-      };
-      // 创建
-      this.editor.create();
-
-      //显示商品描述
-      this.editor.txt.html(this.form.description);
-    },
-    // 删除事件
-    handleDelete(row) {
-        let id = row.id;
-      this.http.post("/api/goodsdelete", { id }).then((res) => {
-        if (res.code != 200) {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: "error",
-          });
-        } else {
-        //   this.tableData = res.list;
-        this.getPage()
-        }
-      });
-    },
-    // 清除图片列表
-    handleRemove() {
-       this.$(".el-upload-list--picture-card").html("");
-    },
-    // 照片预览图片显示
-    handlePictureCardPreview(file) {
-      this.dialogImageUrl = file.url;
-      this.dialogVisible = true;
-    },
-    // 选中上传图片后触发行数
-    // file:包含被上传图片信息对象
-    handleChangeFile(file) {
-      this.form.img = file.raw;
-    },
-    //分页切换
-    handleCurrentChange: function (currentPage) {
-      this.page = currentPage;
-      this.getPage();
-    },
     // 分类切换事件
     handleSpecsChange() {
       // 获取对应类别
@@ -466,7 +408,6 @@ export default {
   },
 };
 </script>
-
 <style lang="" scoped>
 .btn {
   overflow: hidden;

@@ -20,7 +20,7 @@
       <el-table-column label="状态" width="80">
         <template slot-scope="scope">
           <el-tag v-if="scope.row.status === 1" size="small" type="success">启用</el-tag>
-          <el-tag v-else-if="scope.row.status === 2" size="small">未启用</el-tag>
+          <el-tag v-else-if="scope.row.status === 2" size="small" type="info">未启用</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="操作" min-width="180">
@@ -140,25 +140,7 @@ export default {
     handleChangeFile(file) {
       this.form.img = file.raw;
     },
-    // import E from 'wangeditor'
-    // // 对话框打开事件
-    // handleOpen() {
-    //   this.form.id ? (this.oldImg = true) : (this.oldImg = false);
-    //   this.$("#editor").empty();
-    //   // 实例化
-    //   this.editor = new E("#editor");
-
-    //   // 用户在文本框中输入 编辑 触发事件
-    //   // html-》 用户输入的html 结构
-    //   this.editor.customConfig.onchange = (html) => {
-    //     this.form.description = html;
-    //   };
-    //   // 创建
-    //   this.editor.create();
-
-    //   //显示商品描述
-    //   this.editor.txt.html(this.form.description);
-    // },
+    
     handleSubmit(formName) {
       this.$refs[formName].validate(valid => {
         if (!valid) return;
